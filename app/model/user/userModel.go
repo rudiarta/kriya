@@ -52,7 +52,7 @@ func (base *Base) BeforeCreate(scope *gorm.Scope) error {
 type User struct {
 	Base
 	Data   UserData `gorm:"column:data;type:jsonb;"`
-	RoleID int      `gorm:"column:role_id;"`
+	RoleID string   `gorm:"column:role_id;"`
 }
 
 func (User) TableName() string {
