@@ -2,15 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rudiarta/kriya/app/controller/auth"
-	"github.com/rudiarta/kriya/app/controller/user"
+	"github.com/rudiarta/kriya/config"
 )
 
 func main() {
 	App := gin.Default()
-
-	user.Routes(App)
-	auth.Routes(App)
-
-	App.Run()
+	gin.SetMode(config.DotEnvVariable("APP_ENV"))
+	config.InitRoutes(App)
+	App.Run(":" + config.DotEnvVariable("PORT"))
 }
