@@ -36,6 +36,7 @@ func (p *StatusData) Scan(src interface{}) error {
 type UserData struct {
 	Username string     `json:"username,omitempty"`
 	Email    string     `json:"email,omitempty"`
+	Password string     `json:"password,omitempty"`
 	Status   StatusData `json:"status,omitempty"`
 }
 

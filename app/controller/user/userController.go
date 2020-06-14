@@ -2,26 +2,26 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rudiarta/kriya/app/middleware"
 	"github.com/rudiarta/kriya/app/model/role"
 	userModel "github.com/rudiarta/kriya/app/model/user"
+	"github.com/rudiarta/kriya/app/service"
 	"github.com/rudiarta/kriya/config/database"
 )
 
 func Routes(route *gin.Engine) {
 	user := route.Group("/user")
 	{
-		user.POST("/addUser", func(c *gin.Context) {
+		user.POST("/addUser", middleware.AdminMiddleware(), func(c *gin.Context) {
 			db, _ := database.InitDatabase()
 			defer db.Close()
 
-			token := c.Request.Header["Authorization"][0]
-			rune := []rune(token)
-			_ = string(rune[7:]) //for bearer token
-
+			password, _ := service.HashPassword(c.PostForm("password"))
 			item := userModel.User{
 				Data: userModel.UserData{
 					Email:    c.PostForm("email"),
 					Username: c.PostForm("username"),
+					Password: password,
 					Status: userModel.StatusData{
 						IsActive: true,
 					},
