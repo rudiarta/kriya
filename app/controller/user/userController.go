@@ -2,27 +2,56 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/rudiarta/kriya/app/model/role"
 	userModel "github.com/rudiarta/kriya/app/model/user"
 	"github.com/rudiarta/kriya/config/database"
 )
 
 func Routes(route *gin.Engine) {
-	item := new(userModel.User)
-	item.Data = userModel.UserData{
-		"name": "test",
-	}
-	item.RoleID = "381b7700-fd23-44b7-9d1f-befba9fa7d6a"
-
 	user := route.Group("/user")
 	{
-		user.GET("/test", func(c *gin.Context) {
+		user.POST("/addUser", func(c *gin.Context) {
 			db, _ := database.InitDatabase()
-			db.Create(&item)
 			defer db.Close()
+
+			token := c.Request.Header["Authorization"][0]
+			rune := []rune(token)
+			_ = string(rune[7:]) //for bearer token
+
+			item := userModel.User{
+				Data: userModel.UserData{
+					Email:    c.PostForm("email"),
+					Username: c.PostForm("username"),
+					Status: userModel.StatusData{
+						IsActive: true,
+					},
+				},
+				RoleID: "d57bfbfe-4979-4809-a151-f6cd30de657b",
+			}
+
+			var roleData role.Role
+			db.Where("id = ?", item.RoleID).First(&roleData)
+
+			response := userModel.UserResponse{
+				Role: roleData.Data.RoleName,
+				Data: item.Data,
+			}
+
+			if err := db.Create(&item).Error; err != nil {
+				c.JSON(422, gin.H{
+					"message": "fail",
+					"data":    response,
+				})
+
+				return
+			}
+
 			c.JSON(200, gin.H{
-				"message": item,
+				"message": "success",
+				"data":    response,
 			})
+
+			return
 		})
 	}
 }

@@ -10,7 +10,34 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type UserData map[string]interface{}
+type StatusData struct {
+	IsActive bool `json:"is_active,omitempty"`
+}
+
+func (p StatusData) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, err
+}
+
+func (p *StatusData) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return errors.New("Type assertion .([]byte) failed.")
+	}
+
+	err := json.Unmarshal(source, &p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type UserData struct {
+	Username string     `json:"username,omitempty"`
+	Email    string     `json:"email,omitempty"`
+	Status   StatusData `json:"status,omitempty"`
+}
 
 func (p UserData) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
@@ -23,15 +50,9 @@ func (p *UserData) Scan(src interface{}) error {
 		return errors.New("Type assertion .([]byte) failed.")
 	}
 
-	var i interface{}
-	err := json.Unmarshal(source, &i)
+	err := json.Unmarshal(source, &p)
 	if err != nil {
 		return err
-	}
-
-	*p, ok = i.(map[string]interface{})
-	if !ok {
-		return errors.New("Type assertion .(map[string]interface{}) failed.")
 	}
 
 	return nil
