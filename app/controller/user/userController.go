@@ -53,5 +53,41 @@ func Routes(route *gin.Engine) {
 
 			return
 		})
+		user.PUT("/updateUser", middleware.AdminMiddleware(), func(c *gin.Context) {
+			userID := c.PostForm("id")
+			userName := c.PostForm("username")
+			userEmail := c.PostForm("email")
+			password, _ := service.HashPassword(c.PostForm("password"))
+			userPassword := password
+			db, _ := database.InitDatabase()
+
+			var userData userModel.User
+			var roleData role.Role
+			db.Where("id = ?", userID).First(&userData)
+			tmpUser := userData
+			tmpUser.Data.Username = userName
+			tmpUser.Data.Email = userEmail
+			tmpUser.Data.Password = userPassword
+			db.Model(&userData).Where("id = ?", userID).Update(tmpUser)
+			db.Where("id = ?", tmpUser.RoleID).First(&roleData)
+
+			result := userModel.UserResponse{
+				Role: roleData.Data.RoleName,
+				Data: tmpUser.Data,
+			}
+
+			c.JSON(200, gin.H{
+				"message": result,
+			})
+		})
+		user.DELETE("/deleteUser/:id", middleware.AdminMiddleware(), func(c *gin.Context) {
+			db, _ := database.InitDatabase()
+			id := c.Param("id")
+
+			db.Where("id = ?", id).Delete(userModel.User{})
+			c.JSON(200, gin.H{
+				"message": "success",
+			})
+		})
 	}
 }

@@ -13,6 +13,13 @@ import (
 
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if len(c.Request.Header["Authorization"]) == 0 {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Unauthorized.",
+			})
+			c.Abort()
+			return
+		}
 		token := c.Request.Header["Authorization"][0]
 		rune := []rune(token)
 		tokenBearer := string(rune[7:])
