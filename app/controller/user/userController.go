@@ -154,73 +154,73 @@ func Routes(route *gin.Engine) {
 				"next": link,
 			})
 		})
-	}
-	user.GET("/listUser/:page", func(c *gin.Context) {
-		db, _ := database.InitDatabase()
-		defer db.Close()
-		pageString := c.Param("page")
-		page, _ := strconv.Atoi(pageString)
+		user.GET("/listUser/:page", func(c *gin.Context) {
+			db, _ := database.InitDatabase()
+			defer db.Close()
+			pageString := c.Param("page")
+			page, _ := strconv.Atoi(pageString)
 
-		var count float64
-		if result := db.Model(&userModel.User{}).Count(&count); result.Error != nil {
-			c.JSON(422, gin.H{
-				"message": "Error",
-			})
-
-			return
-		}
-		result := count / float64(5)
-		pages := int(math.Ceil(result))
-		userData := []userModel.User{}
-
-		if page <= pages {
-			if result := db.Limit(5).Offset((page * 5) - 5).Find(&userData); result.Error != nil {
+			var count float64
+			if result := db.Model(&userModel.User{}).Count(&count); result.Error != nil {
 				c.JSON(422, gin.H{
 					"message": "Error",
 				})
+
 				return
 			}
+			result := count / float64(5)
+			pages := int(math.Ceil(result))
+			userData := []userModel.User{}
 
-			response := []userModel.UserGetListResponse{}
-			for _, v := range userData {
-				response = append(response, userModel.UserGetListResponse{
-					Email:    v.Data.Email,
-					Status:   v.Data.Status,
-					Username: v.Data.Username,
-				})
-			}
+			if page <= pages {
+				if result := db.Limit(5).Offset((page * 5) - 5).Find(&userData); result.Error != nil {
+					c.JSON(422, gin.H{
+						"message": "Error",
+					})
+					return
+				}
 
-			if (page + 1) <= pages {
-				link := "http://" + os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/user/listUser/" + strconv.Itoa(page+1)
-				linkPrev := "http://" + os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/user/listUser/" + strconv.Itoa(page-1)
+				response := []userModel.UserGetListResponse{}
+				for _, v := range userData {
+					response = append(response, userModel.UserGetListResponse{
+						Email:    v.Data.Email,
+						Status:   v.Data.Status,
+						Username: v.Data.Username,
+					})
+				}
 
-				if page < 2 {
+				if (page + 1) <= pages {
+					link := "http://" + os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/user/listUser/" + strconv.Itoa(page+1)
+					linkPrev := "http://" + os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/user/listUser/" + strconv.Itoa(page-1)
+
+					if page < 2 {
+						c.JSON(200, gin.H{
+							"data": response,
+							"next": link,
+						})
+
+						return
+					}
 					c.JSON(200, gin.H{
 						"data": response,
 						"next": link,
+						"prev": linkPrev,
 					})
 
 					return
 				}
+
 				c.JSON(200, gin.H{
 					"data": response,
-					"next": link,
-					"prev": linkPrev,
 				})
 
 				return
 			}
 
-			c.JSON(200, gin.H{
-				"data": response,
+			c.JSON(422, gin.H{
+				"message": "over lap offset",
 			})
-
 			return
-		}
-
-		c.JSON(422, gin.H{
-			"message": "over lap offset",
 		})
-		return
-	})
+	}
 }
